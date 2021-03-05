@@ -34,7 +34,7 @@ _source_s3_path=${_source_s3_bucket_path#*/}
 echo "Start Downloading from ${_source} to ${_temp_download_root_dir}/${_temp_download_dir} ..."
 _temp_download_dir=${_source_s3_path//\//-}
 mkdir -p ${_temp_download_root_dir}/${_temp_download_dir}
-#s3cmd -c ${_source_cfg} --force -r get ${_source} ${_temp_download_root_dir}/${_temp_download_dir}
+s3cmd -c ${_source_cfg} --force -r get ${_source} ${_temp_download_root_dir}/${_temp_download_dir}
 echo "... Done for download"
 
 # uploading
