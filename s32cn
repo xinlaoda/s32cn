@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# configure
+_source_cfg=/home/ec2-user/.s3cfg-us
+_target_cfg=/home/ec2-user/.s3cfg
+_target_bucket="sentinel-s2-l2a-xxin"
+_temp_download_root_dir=/home/ec2-user/sentinel-2_data
+
+# main
+_source=$1
+
+if [ "$_source" = "" ]; then
+	echo "Please input s3 URI to copy!"
+	exit 1
+fi
+
+_protocol=${_source%%//*}
+if [ "$_protocol" != "s3:" ]; then
+	echo "Invalid s3 URI : $_protocol"
+	exit 2
+fi
+
+if [[ "$_source" =~ /$ ]]; then
+	echo
+else
+	_source="${_source}/"
+fi
+
+_source_s3_bucket_path=${_source#*//}
+_source_s3_bucket=${_source_s3_bucket_path%%/*}
+_source_s3_path=${_source_s3_bucket_path#*/}
+
+# download from source
+echo "Start Downloading from ${_source} to ${_temp_download_root_dir}/${_temp_download_dir} ..."
+_temp_download_dir=${_source_s3_path//\//-}
+mkdir -p ${_temp_download_root_dir}/${_temp_download_dir}
+#s3cmd -c ${_source_cfg} --force -r get ${_source} ${_temp_download_root_dir}/${_temp_download_dir}
+echo "... Done for download"
+
+# uploading
+_list=`find ${_temp_download_root_dir}/${_temp_download_dir} -type f`
+echo "Start Uploading ..."
+for _f in ${_list} 
+do
+	_target_path=${_f##*$_temp_download_dir\/}
+	_target_s3_uri=${_protocol}//${_target_bucket}/${_source_s3_path}${_target_path}
+	s3cmd -c ${_target_cfg} --force put ${_f} ${_target_s3_uri} &
+done
+wait
+echo "... Done for Upload"
+
+# santy check for uploading
+echo "Start upload check ..."
+	s3cmd -v sync ${_temp_download_root_dir}/${_temp_download_dir}/ ${_protocol}//${_target_bucket}/${_source_s3_path}
+echo "... Done for upload check"
