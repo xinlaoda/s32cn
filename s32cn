@@ -34,7 +34,7 @@ _source_s3_path=${_source_s3_bucket_path#*/}
 echo "Start Downloading from ${_source} to ${_temp_download_root_dir}/${_temp_download_dir} ..."
 _temp_download_dir=${_source_s3_path//\//-}
 mkdir -p ${_temp_download_root_dir}/${_temp_download_dir}
-s3cmd -c ${_source_cfg} --force -r get ${_source} ${_temp_download_root_dir}/${_temp_download_dir}
+s3cmd -c ${_source_cfg} -v sync ${_source} ${_temp_download_root_dir}/${_temp_download_dir}/ 
 echo "... Done for download"
 
 # uploading
@@ -44,7 +44,7 @@ for _f in ${_list}
 do
 	_target_path=${_f##*$_temp_download_dir\/}
 	_target_s3_uri=${_protocol}//${_target_bucket}/${_source_s3_path}${_target_path}
-	s3cmd -c ${_target_cfg} --force put ${_f} ${_target_s3_uri} &
+	s3cmd -c ${_target_cfg} --disable-multipart --continue-put put ${_f} ${_target_s3_uri} &
 done
 wait
 echo "... Done for Upload"
